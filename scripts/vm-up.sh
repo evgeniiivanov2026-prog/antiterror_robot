@@ -32,7 +32,7 @@ EOF
 fi
 
 if ! command -v docker >/dev/null 2>&1 || ! command -v python3 >/dev/null 2>&1; then
-  echo "Нужны Docker и Python. Сначала: sudo apt install -y docker.io docker-compose-v2 python3" >&2
+  echo "Нужны Docker и Python. Сначала: sudo apt install -y docker.io docker-compose-v2 docker-buildx python3" >&2
   exit 1
 fi
 if ! docker info >/dev/null 2>&1; then
@@ -47,6 +47,16 @@ if ! docker info >/dev/null 2>&1; then
 fi
 if ! docker compose version >/dev/null 2>&1; then
   echo "Нет команды docker compose. Выполните: apt install -y docker-compose-v2" >&2
+  exit 1
+fi
+if ! docker buildx version >/dev/null 2>&1; then
+  if [ "$(id -u)" -eq 0 ]; then
+    apt-get update
+    apt-get install -y docker-buildx
+  fi
+fi
+if ! docker buildx version >/dev/null 2>&1; then
+  echo "Нет плагина buildx. Выполните: apt install -y docker-buildx" >&2
   exit 1
 fi
 if [ ! -f .env ]; then
