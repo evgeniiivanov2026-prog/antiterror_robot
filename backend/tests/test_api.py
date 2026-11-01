@@ -132,6 +132,17 @@ async def test_evidence_pdf_chat_and_deletion(api, auth_header) -> None:
 
 
 @pytest.mark.asyncio
+async def test_session_role(api, auth_header) -> None:
+    client = api["client"]
+    admin = await client.get("/api/v1/me", headers=auth_header(9001))
+    user = await client.get("/api/v1/me", headers=auth_header(21))
+    assert admin.status_code == 200
+    assert admin.json() == {"role": "admin", "telegram_id": 9001}
+    assert user.json()["role"] == "user"
+    assert "username" not in user.json()
+
+
+@pytest.mark.asyncio
 async def test_moderator_cannot_see_contact_and_user_cannot_moderate(api, auth_header) -> None:
     client = api["client"]
     created = await client.post("/api/v1/reports", json=REPORT, headers=auth_header(21))

@@ -4,11 +4,14 @@ export function SafetyBanner() {
   return (
     <aside className="banner">
       <p>{IMMEDIATE_DANGER}</p>
-      <p>
-        <a href="tel:112">112</a>
-        {" · "}
-        <a href="tel:102">102</a>
-      </p>
+      <div className="chip-row">
+        <a className="chip" href="tel:112">
+          112
+        </a>
+        <a className="chip" href="tel:102">
+          102
+        </a>
+      </div>
     </aside>
   )
 }

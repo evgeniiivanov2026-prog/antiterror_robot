@@ -81,9 +81,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         bot_task = None
         if settings.bot_mode == "polling" and settings.bot_token:
             from aiogram import Bot
-            from aiogram.types import BotCommand
 
-            from app.bot.factory import build_dispatcher
+            from app.bot.factory import build_dispatcher, configure_bot
 
             bot = Bot(token=settings.bot_token)
             dispatcher = build_dispatcher(settings, app.state.sessionmaker)
@@ -91,28 +90,35 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             app.state.dispatcher = dispatcher
 
             async def _poll() -> None:
-                await bot.set_my_commands(
-                    [
-                        BotCommand(command="start", description="Открыть AntiTerror Robot"),
-                        BotCommand(command="report", description="Сообщить о происшествии"),
-                        BotCommand(command="emergency", description="Срочная помощь: 112 и 102"),
-                        BotCommand(command="evidence", description="Как сохранить доказательства"),
-                        BotCommand(command="privacy", description="Конфиденциальность"),
-                    ]
-                )
+                try:
+                    await configure_bot(bot, settings)
+                except Exception:
+                    logger.exception("bot menu was not updated")
                 await dispatcher.start_polling(bot, handle_signals=False)
 
             bot_task = asyncio.create_task(_poll())
         elif settings.bot_mode == "webhook" and settings.bot_token and getattr(app.state, "bot", None) is None:
             from aiogram import Bot
 
-            from app.bot.factory import build_dispatcher
+            from app.bot.factory import build_dispatcher, configure_bot
 
-            app.state.bot = Bot(token=settings.bot_token)
+            bot = Bot(token=settings.bot_token)
+            app.state.bot = bot
             app.state.dispatcher = build_dispatcher(settings, app.state.sessionmaker)
+
+            async def _prepare_webhook_bot() -> None:
+                try:
+                    await configure_bot(bot, settings)
+                except Exception:
+                    logger.exception("bot menu was not updated")
+
+            app.state.bot_setup = asyncio.create_task(_prepare_webhook_bot())
         try:
             yield
         finally:
+            setup_task = getattr(app.state, "bot_setup", None)
+            if setup_task is not None:
+                setup_task.cancel()
             if bot_task is not None:
                 bot_task.cancel()
                 try:

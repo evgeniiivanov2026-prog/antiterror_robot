@@ -12,6 +12,7 @@ from app.core.copy import DISCLAIMER, MVD_RECOMMENDATION
 from app.core.errors import AppError
 from app.models.user import User
 from app.schemas.incident import EvidenceOut, IncidentCard, ReportCreate
+from app.schemas.meta import SessionProfile
 from app.services.audit import write_audit
 from app.services.evidence import read_upload, save_evidence
 from app.services.incidents import create_report, decrypt_contact, get_owned, mark_referred, to_card
@@ -196,6 +197,11 @@ async def remove_report(
         target_id=public_id,
     )
     return Response(status_code=204)
+
+
+@router.get("/me", response_model=SessionProfile)
+async def read_me(user: User = Depends(get_current_user)) -> SessionProfile:
+    return SessionProfile(role=user.role.value, telegram_id=user.telegram_id)
 
 
 @router.delete("/me")

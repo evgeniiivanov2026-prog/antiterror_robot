@@ -4,20 +4,18 @@ import type { ThemeParams } from "../types/telegram"
 function applyTheme(params: ThemeParams | undefined, scheme: "light" | "dark") {
   const root = document.documentElement
   root.dataset.scheme = scheme
-  const map: Record<keyof ThemeParams, string> = {
-    bg_color: "--tg-bg",
-    text_color: "--tg-text",
-    hint_color: "--tg-hint",
+  const map: Partial<Record<keyof ThemeParams, string>> = {
     link_color: "--tg-link",
     button_color: "--tg-button",
     button_text_color: "--tg-button-text",
-    secondary_bg_color: "--tg-surface",
   }
   ;(Object.keys(map) as (keyof ThemeParams)[]).forEach((key) => {
+    const cssVar = map[key]
     const value = params?.[key]
-    if (value) root.style.setProperty(map[key], value)
-    else root.style.removeProperty(map[key])
+    if (cssVar && value) root.style.setProperty(cssVar, value)
+    else if (cssVar) root.style.removeProperty(cssVar)
   })
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", scheme === "dark" ? "#070814" : "#f4f0ff")
 }
 
 export function useTelegram() {

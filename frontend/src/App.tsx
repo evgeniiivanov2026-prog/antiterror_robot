@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react"
 import { FALLBACK_CATEGORIES } from "./content/copy"
 import { useBackButton, useMainButton, useTelegram, haptic } from "./hooks/useTelegram"
-import { api } from "./services/api"
+import { api, type SessionProfile } from "./services/api"
+import { wantsAdminScreen } from "./services/entry"
 import { clearDraft, loadDraft, saveDraft } from "./services/draft"
 import type { CategoryInfo, Draft, IncidentCard } from "./types/incident"
 import { emptyDraft } from "./types/incident"
+import { AdminDeniedPage, AdminDetailPage, AdminQueuePage } from "./pages/AdminPage"
 import { CategoryPage } from "./pages/CategoryPage"
 import { ContactsPage } from "./pages/ContactsPage"
 import { EmergencyPage } from "./pages/EmergencyPage"
@@ -13,7 +15,7 @@ import { HomePage } from "./pages/HomePage"
 import { ReportWizard } from "./pages/ReportWizard"
 import { ResultPage } from "./pages/ResultPage"
 
-type ScreenName = "home" | "category" | "wizard" | "emergency" | "evidence" | "contacts" | "result"
+type ScreenName = "home" | "category" | "wizard" | "emergency" | "evidence" | "contacts" | "result" | "admin" | "adminDenied" | "adminDetail"
 
 interface PrimaryAction {
   text: string
@@ -31,11 +33,36 @@ export function App() {
   const [card, setCard] = useState<IncidentCard | null>(null)
   const [safetyAck, setSafetyAck] = useState(false)
   const [primary, setPrimary] = useState<PrimaryAction | null>(null)
+  const [role, setRole] = useState<SessionProfile["role"] | null>(null)
+  const [adminReportId, setAdminReportId] = useState<string | null>(null)
   const screen = stack[stack.length - 1]
 
   useEffect(() => {
     saveDraft(draft)
   }, [draft])
+
+  useEffect(() => {
+    let cancelled = false
+    api
+      .session()
+      .then((profile) => {
+        if (!cancelled) setRole(profile.role)
+      })
+      .catch(() => {
+        if (!cancelled) setRole("user")
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    if (role === null || !wantsAdminScreen()) return
+    setStack((current) => {
+      if (current.includes("admin") || current.includes("adminDenied")) return current
+      return [...current, role === "admin" ? "admin" : "adminDenied"]
+    })
+  }, [role])
 
   useEffect(() => {
     let cancelled = false
@@ -108,12 +135,14 @@ export function App() {
 
   return (
     <div className="app">
+      <div className="sky" aria-hidden="true" />
       {screen === "home" ? (
         <HomePage
           onReport={() => push("category")}
           onEmergency={openEmergency}
           onEvidence={() => push("evidence")}
           onContacts={() => push("contacts")}
+          onAdmin={role === "admin" ? () => push("admin") : undefined}
         />
       ) : null}
       {screen === "category" ? (
@@ -147,6 +176,9 @@ export function App() {
       {screen === "emergency" ? <EmergencyPage onContinue={continueAfterSafety} /> : null}
       {screen === "evidence" ? <EvidenceGuidePage /> : null}
       {screen === "contacts" ? <ContactsPage /> : null}
+      {screen === "admin" ? <AdminQueuePage onOpen={(reportId) => { setAdminReportId(reportId); push("adminDetail") }} /> : null}
+      {screen === "adminDenied" ? <AdminDeniedPage /> : null}
+      {screen === "adminDetail" && adminReportId ? <AdminDetailPage reportId={adminReportId} /> : null}
       {screen === "result" && card ? (
         <ResultPage
           card={card}
