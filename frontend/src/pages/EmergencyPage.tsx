@@ -3,7 +3,7 @@ import { Screen } from "../components/Screen"
 
 export function EmergencyPage({ onContinue }: { onContinue: () => void }) {
   return (
-    <Screen title="Срочная опасность" lede={IMMEDIATE_DANGER}>
+    <Screen tone="alert" title="Срочная опасность" lede={IMMEDIATE_DANGER}>
       <div className="stack">
         <a className="call call-signal" href="tel:112">
           <strong>Позвонить 112</strong>

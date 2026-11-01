@@ -108,6 +108,7 @@ export function App() {
 
   return (
     <div className="app">
+      <div className="sky" aria-hidden="true" />
       {screen === "home" ? (
         <HomePage
           onReport={() => push("category")}

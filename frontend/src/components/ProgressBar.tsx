@@ -1,6 +1,6 @@
 export function ProgressBar({ step, total }: { step: number; total: number }) {
   return (
-    <div>
+    <div className="orbit">
       <p className="step-label">{`Шаг ${step} из ${total}`}</p>
       <div
         className={`progress progress-${step}`}
@@ -10,7 +10,9 @@ export function ProgressBar({ step, total }: { step: number; total: number }) {
         aria-valuenow={step}
         aria-label={`Шаг ${step} из ${total}`}
       >
-        <span />
+        {Array.from({ length: total }, (_, index) => (
+          <span key={index} className={index < step ? "on" : undefined} />
+        ))}
       </div>
     </div>
   )

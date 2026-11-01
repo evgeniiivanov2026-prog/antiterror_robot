@@ -1,12 +1,23 @@
 import { useEffect, useRef, type ReactNode } from "react"
 
-export function Screen({ title, lede, children }: { title: string; lede?: string; children: ReactNode }) {
+export function Screen({
+  title,
+  lede,
+  children,
+  tone = "default",
+}: {
+  title: string
+  lede?: string
+  children: ReactNode
+  tone?: "default" | "alert"
+}) {
   const heading = useRef<HTMLHeadingElement>(null)
   useEffect(() => {
     heading.current?.focus()
   }, [title])
   return (
-    <main className="screen">
+    <main className={tone === "alert" ? "screen screen-alert" : "screen"}>
+      <p className="kicker">{tone === "alert" ? "Прямо сейчас" : "Орбита"}</p>
       <h1 ref={heading} tabIndex={-1}>
         {title}
       </h1>
