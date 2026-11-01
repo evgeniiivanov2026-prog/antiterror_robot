@@ -3,8 +3,7 @@ FROM node:22-bookworm-slim
 RUN apt-get update \
   && apt-get install -y --no-install-recommends ca-certificates openssl \
   && rm -rf /var/lib/apt/lists/* \
-  && corepack enable \
-  && corepack prepare pnpm@9.15.9 --activate
+  && npm install -g pnpm@9.15.9
 
 WORKDIR /app
 
