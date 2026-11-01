@@ -31,3 +31,26 @@ jobs:
         working-directory: frontend
       - run: npm run build
         working-directory: frontend
+
+  max-moderator:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: max-moderator
+    env:
+      DATABASE_URL: postgresql://maxmod:maxmod@localhost:5432/maxmod
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.11.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+          cache-dependency-path: max-moderator/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm prisma generate
+      - run: pnpm test
+      - run: pnpm typecheck
+      - run: pnpm lint

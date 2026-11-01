@@ -1,0 +1,118 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model ChatSettings {
+  chatId            String   @id @map("chat_id")
+  linkMode          String   @default("review") @map("link_mode")
+  defaultAction     String   @default("DELETE") @map("default_action")
+  language          String   @default("ru")
+  enabled           Boolean  @default(true)
+  wholeWord         Boolean  @default(true) @map("whole_word")
+  purgeEnabled      Boolean  @default(false) @map("purge_enabled")
+  hardAction        String   @default("NOTIFY_ADMINS") @map("hard_action")
+  capsRatio         Float    @default(0.7) @map("caps_ratio")
+  capsMinLength     Int      @default(20) @map("caps_min_length")
+  floodLimit        Int      @default(8) @map("flood_limit")
+  floodWindowMs     Int      @default(10000) @map("flood_window_ms")
+  repeatLimit       Int      @default(3) @map("repeat_limit")
+  mentionLimit      Int      @default(5) @map("mention_limit")
+  moderateCaps      Boolean  @default(true) @map("moderate_caps")
+  moderateFlood     Boolean  @default(true) @map("moderate_flood")
+  moderateMentions  Boolean  @default(true) @map("moderate_mentions")
+  moderateMedia     Boolean  @default(false) @map("moderate_media")
+  moderateForwards  Boolean  @default(false) @map("moderate_forwards")
+  lexiconSeeded     Boolean  @default(false) @map("lexicon_seeded")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@map("chat_settings")
+}
+
+model WordFilter {
+  id        Int      @id @default(autoincrement())
+  chatId    String   @map("chat_id")
+  type      String
+  pattern   String
+  action    String
+  severity  String
+  enabled   Boolean  @default(true)
+  wholeWord Boolean  @default(true) @map("whole_word")
+  createdBy String   @map("created_by")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([chatId, enabled])
+  @@map("word_filters")
+}
+
+model LinkRule {
+  id        Int      @id @default(autoincrement())
+  chatId    String   @map("chat_id")
+  domain    String
+  list      String
+  action    String
+  note      String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([chatId, domain])
+  @@index([chatId])
+  @@map("link_rules")
+}
+
+model UserWhitelist {
+  chatId    String   @map("chat_id")
+  userId    String   @map("user_id")
+  reason    String?
+  createdBy String   @map("created_by")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@id([chatId, userId])
+  @@map("user_whitelist")
+}
+
+model Violation {
+  id            Int      @id @default(autoincrement())
+  chatId        String   @map("chat_id")
+  userId        String   @map("user_id")
+  messageId     String   @map("message_id")
+  ruleId        Int?     @map("rule_id")
+  violationType String   @map("violation_type")
+  severity      String
+  action        String
+  reason        String
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@unique([chatId, messageId])
+  @@index([chatId, userId, createdAt])
+  @@map("violations")
+}
+
+model AuditLog {
+  id           Int      @id @default(autoincrement())
+  chatId       String   @map("chat_id")
+  actorId      String   @map("actor_id")
+  targetUserId String?  @map("target_user_id")
+  action       String
+  reason       String
+  metadata     Json     @default("{}")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([chatId, createdAt])
+  @@map("audit_logs")
+}
+
+model AdminRole {
+  chatId    String   @map("chat_id")
+  userId    String   @map("user_id")
+  role      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@id([chatId, userId])
+  @@map("admin_roles")
+}
