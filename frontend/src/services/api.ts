@@ -27,7 +27,7 @@ export class ApiError extends Error {
 function authHeaders(json: boolean): Headers {
   const headers = new Headers()
   if (json) headers.set("Content-Type", "application/json")
-  const initData = window.Telegram?.WebApp?.initData
+  const initData = window.WebApp?.initData || window.Telegram?.WebApp?.initData
   if (initData) headers.set("Authorization", `tma ${initData}`)
   else if (import.meta.env.VITE_DEV_USER_ID) headers.set("X-Dev-User-Id", import.meta.env.VITE_DEV_USER_ID)
   return headers

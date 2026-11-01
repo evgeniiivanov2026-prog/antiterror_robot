@@ -172,7 +172,46 @@ for line in Path(".env").read_text(encoding="utf-8").splitlines():
 
 token = env.get("BOT_TOKEN", "")
 mode = env.get("BOT_MODE", "polling")
+platform = env.get("BOT_PLATFORM", "telegram")
 if mode == "disabled" or not token:
+    sys.exit(0)
+
+if platform == "max":
+    def max_call(path, payload=None, http="POST"):
+        data = None if payload is None else json.dumps(payload).encode()
+        headers = {"Authorization": token}
+        if data is not None:
+            headers["Content-Type"] = "application/json"
+        request = urllib.request.Request(
+            f"https://platform-api2.max.ru/{path}",
+            data=data,
+            headers=headers,
+            method=http,
+        )
+        with urllib.request.urlopen(request, timeout=30) as response:
+            raw = response.read().decode() or "{}"
+            return json.loads(raw)
+
+    try:
+        if mode == "webhook":
+            result = max_call(
+                "subscriptions",
+                {
+                    "url": f"{public}/api/v1/max/webhook",
+                    "update_types": ["message_created", "bot_started", "message_callback"],
+                    "secret": env.get("BOT_WEBHOOK_SECRET", ""),
+                },
+            )
+        else:
+            try:
+                result = max_call("subscriptions", http="DELETE")
+            except Exception:
+                result = {}
+    except Exception:
+        sys.exit("MAX не принял настройку бота. Проверьте токен из кабинета MAX.")
+    if isinstance(result, dict) and result.get("success") is False:
+        sys.exit("MAX не принял настройку бота.")
+    print("В кабинете MAX вставьте адрес мини-приложения:", public)
     sys.exit(0)
 
 def call(method, fields):

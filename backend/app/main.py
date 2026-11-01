@@ -21,7 +21,7 @@ from app.core.logging import configure_logging, request_id_var
 from app.core.rate_limit import MemoryRateLimiter, RedisRateLimiter
 from app.models import Base
 from app.services.encryption import ContactCipher
-from app.services.notifier import TelegramNotifier
+from app.services.notifier import MaxNotifier, TelegramNotifier
 from app.services.storage import S3Storage, build_storage
 from cryptography.fernet import Fernet
 
@@ -76,10 +76,41 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if getattr(app.state, "cipher", None) is None:
             app.state.cipher = ContactCipher(resolve_encryption_key(settings))
         if getattr(app.state, "notifier", None) is None and settings.bot_token:
-            app.state.notifier = TelegramNotifier(settings.bot_token)
+            if settings.bot_platform == "max":
+                app.state.notifier = MaxNotifier(settings.bot_token)
+            else:
+                app.state.notifier = TelegramNotifier(settings.bot_token)
 
         bot_task = None
-        if settings.bot_mode == "polling" and settings.bot_token:
+        if settings.bot_platform == "max" and settings.bot_mode in {"polling", "webhook"} and settings.bot_token:
+            from app.bot.max_client import MaxClient
+            from app.bot.max_flow import plan_reply
+
+            max_client = MaxClient(settings.bot_token)
+            app.state.max_client = max_client
+
+            async def _poll_max() -> None:
+                marker: int | None = None
+                while True:
+                    try:
+                        payload = await max_client.updates(marker)
+                        raw_marker = payload.get("marker")
+                        marker = raw_marker if isinstance(raw_marker, int) else marker
+                        for update in payload.get("updates") or []:
+                            if not isinstance(update, dict):
+                                continue
+                            reply = await plan_reply(update, settings, app.state.sessionmaker)
+                            if reply is not None:
+                                await max_client.send_reply(reply)
+                    except asyncio.CancelledError:
+                        raise
+                    except Exception:
+                        logger.exception("max polling failed")
+                        await asyncio.sleep(3)
+
+            if settings.bot_mode == "polling":
+                bot_task = asyncio.create_task(_poll_max())
+        elif settings.bot_mode == "polling" and settings.bot_token:
             from aiogram import Bot
 
             from app.bot.factory import build_dispatcher, configure_bot
@@ -128,6 +159,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             bot = getattr(app.state, "bot", None)
             if bot is not None:
                 await bot.session.close()
+            max_client = getattr(app.state, "max_client", None)
+            if max_client is not None:
+                await max_client.aclose()
             engine = getattr(app.state, "engine", None)
             if engine is not None:
                 await engine.dispose()
@@ -193,7 +227,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             if path.startswith("/api/") and path not in {"/api/v1/health", "/api/v1/ready"}:
                 limiter = getattr(request.app.state, "limiter", None)
                 if limiter is not None:
-                    limit = 300 if path.endswith("/telegram/webhook") else settings.rate_limit_requests
+                    limit = 300 if path.endswith("/webhook") else settings.rate_limit_requests
                     group = path.split("/")[3] if path.count("/") > 3 else "api"
                     allowed = await limiter.allow(
                         f"ip:{client_host(request, settings)}:{group}",

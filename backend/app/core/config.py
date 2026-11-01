@@ -39,6 +39,8 @@ class Settings(BaseSettings):
     bot_display_name: str = "AntiTerror Robot"
     bot_webhook_secret: str = ""
     bot_mode: str = "polling"
+    # telegram keeps the existing bot. max talks to platform-api2.max.ru.
+    bot_platform: str = "telegram"
     webapp_url: str = ""
 
     contact_encryption_key: str = ""
@@ -79,6 +81,14 @@ class Settings(BaseSettings):
         allowed = {"polling", "webhook", "disabled"}
         if value not in allowed:
             raise ValueError("BOT_MODE must be polling, webhook, or disabled")
+        return value
+
+    @field_validator("bot_platform")
+    @classmethod
+    def _bot_platform(cls, value: str) -> str:
+        allowed = {"telegram", "max"}
+        if value not in allowed:
+            raise ValueError("BOT_PLATFORM must be telegram or max")
         return value
 
     @field_validator("bot_username")
