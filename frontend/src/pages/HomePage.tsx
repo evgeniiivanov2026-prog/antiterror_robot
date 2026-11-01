@@ -15,14 +15,10 @@ export function HomePage({
 }) {
   return (
     <main className="home">
-      <svg className="mark" viewBox="0 0 64 64" aria-hidden="true">
-        <circle cx="32" cy="32" r="22" fill="none" stroke="currentColor" strokeWidth="1.4" opacity="0.85" />
-        <circle cx="32" cy="32" r="14" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.35" />
-        <circle cx="32" cy="32" r="6.5" fill="currentColor" />
-        <g className="mark-orbit">
-          <circle cx="50" cy="20" r="3.2" fill="#3ad7ff" />
-        </g>
-      </svg>
+      <div className="mark-slot" aria-hidden="true">
+        <img className="mark-photo mark-dawn" src="/orbit-dawn.jpg" alt="" />
+        <img className="mark-photo mark-void" src="/orbit-void.jpg" alt="" />
+      </div>
       <p className="kicker">Орбита</p>
       <h1>AntiTerror Robot</h1>
       <p className="slogan">Сообщай. Фиксируй. Защищай.</p>

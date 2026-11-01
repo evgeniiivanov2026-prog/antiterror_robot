@@ -122,11 +122,35 @@ a { color: var(--link); }
   inset: 0;
   z-index: -1;
   pointer-events: none;
+  overflow: hidden;
+  background: var(--void);
+}
+.sky-photo {
+  position: absolute;
+  inset: -8%;
+  width: 116%;
+  height: 116%;
+  object-fit: cover;
+  animation: drift 32s ease-in-out infinite alternate;
+}
+.sky-void { opacity: 0; }
+.sky-aurora {
+  position: absolute;
+  inset: -28%;
+  z-index: 1;
   background:
-    radial-gradient(900px 520px at 8% -8%, var(--nebula-a), transparent 60%),
-    radial-gradient(760px 480px at 112% 0%, var(--nebula-b), transparent 55%),
-    radial-gradient(680px 460px at 50% 115%, var(--nebula-c), transparent 60%),
-    var(--void);
+    radial-gradient(closest-side at 16% 20%, var(--nebula-a), transparent 72%),
+    radial-gradient(closest-side at 84% 16%, var(--nebula-b), transparent 70%),
+    radial-gradient(closest-side at 58% 86%, var(--nebula-c), transparent 74%);
+  animation: aurora 22s ease-in-out infinite alternate;
+}
+.sky::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--void) 28%, transparent), color-mix(in srgb, var(--void) 52%, transparent) 36%, color-mix(in srgb, var(--void) 68%, transparent));
 }
 .sky::after {
   content: "";
@@ -141,8 +165,36 @@ a { color: var(--link); }
     radial-gradient(1.2px 1.2px at 88% 38%, var(--star), transparent),
     radial-gradient(1px 1px at 18% 48%, var(--star), transparent),
     radial-gradient(1.3px 1.3px at 58% 84%, var(--star), transparent);
-  opacity: 0.7;
+  opacity: 0.45;
+  z-index: 3;
+  animation: twinkle 7s ease-in-out infinite alternate;
 }
+@keyframes drift {
+  from { transform: scale(1) translate3d(0, 0, 0); }
+  to { transform: scale(1.08) translate3d(-2%, -1.5%, 0); }
+}
+@keyframes aurora {
+  from { transform: translate3d(-3%, 1%, 0) rotate(0deg); }
+  to { transform: translate3d(4%, -2%, 0) rotate(7deg); }
+}
+@keyframes twinkle {
+  from { opacity: 0.28; }
+  to { opacity: 0.7; }
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-scheme="light"]) .sky-dawn,
+  :root:not([data-scheme="light"]) .mark-dawn { opacity: 0; }
+  :root:not([data-scheme="light"]) .sky-void { opacity: 1; }
+  :root:not([data-scheme="light"]) .mark-void { opacity: 1; }
+}
+:root[data-scheme="dark"] .sky-dawn,
+:root[data-scheme="dark"] .mark-dawn { opacity: 0; }
+:root[data-scheme="dark"] .sky-void,
+:root[data-scheme="dark"] .mark-void { opacity: 1; }
+:root[data-scheme="light"] .sky-dawn,
+:root[data-scheme="light"] .mark-dawn { opacity: 1; }
+:root[data-scheme="light"] .sky-void,
+:root[data-scheme="light"] .mark-void { opacity: 0; }
 
 .app {
   position: relative;
@@ -177,17 +229,42 @@ a { color: var(--link); }
   font-weight: 700;
 }
 
-.mark {
-  width: 72px;
-  height: 72px;
-  margin-bottom: 18px;
-  color: var(--button);
-  filter: drop-shadow(0 10px 18px var(--glow));
+.mark-slot {
+  display: grid;
+  width: 148px;
+  height: 148px;
+  margin: 0 0 8px;
 }
-.mark-orbit {
-  transform-box: view-box;
-  transform-origin: center;
-  animation: orbit 18s linear infinite;
+.mark-photo {
+  grid-area: 1 / 1;
+  width: 148px;
+  height: 148px;
+  border-radius: 50%;
+  object-fit: cover;
+  animation: orbit 28s linear infinite;
+  box-shadow: 0 16px 36px var(--glow);
+}
+.mark-void { opacity: 0; }
+.home > * {
+  animation: rise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.home > *:nth-child(2) { animation-delay: 0.04s; }
+.home > *:nth-child(3) { animation-delay: 0.08s; }
+.home > *:nth-child(4) { animation-delay: 0.12s; }
+.home > *:nth-child(5) { animation-delay: 0.16s; }
+.home-actions .btn { animation: fade 0.7s ease both; }
+.home-actions .btn:nth-child(1) { animation-delay: 0.18s; }
+.home-actions .btn:nth-child(2) { animation-delay: 0.24s; }
+.home-actions .btn:nth-child(3) { animation-delay: 0.3s; }
+.home-actions .btn:nth-child(4) { animation-delay: 0.36s; }
+.home-actions .btn:nth-child(5) { animation-delay: 0.42s; }
+@keyframes rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 @keyframes orbit {
   to { transform: rotate(360deg); }
@@ -232,6 +309,10 @@ a { color: var(--link); }
   font-size: 1.25rem;
   font-weight: 700;
   box-shadow: 0 16px 32px rgba(194, 24, 74, 0.32);
+  animation: signal-glow 2.6s ease-in-out infinite;
+}
+@keyframes signal-glow {
+  50% { box-shadow: 0 0 0 7px rgba(194, 24, 74, 0.16), 0 16px 32px rgba(194, 24, 74, 0.32); }
 }
 .call {
   flex-direction: column;
@@ -329,8 +410,14 @@ button.choice::before {
   background: color-mix(in srgb, var(--text) 14%, transparent);
 }
 .progress > span.on {
-  background: linear-gradient(90deg, var(--button), #3ad7ff);
+  background: linear-gradient(90deg, var(--button), #3ad7ff, var(--button));
+  background-size: 200% 100%;
   box-shadow: 0 0 12px var(--glow);
+  animation: flow 2.8s linear infinite;
+}
+@keyframes flow {
+  from { background-position: 0 0; }
+  to { background-position: 200% 0; }
 }
 
 .field { display: grid; gap: 8px; margin-top: 18px; }

@@ -135,7 +135,11 @@ export function App() {
 
   return (
     <div className="app">
-      <div className="sky" aria-hidden="true" />
+      <div className="sky" aria-hidden="true">
+        <img className="sky-photo sky-dawn" src="/sky-dawn.jpg" alt="" />
+        <img className="sky-photo sky-void" src="/sky-void.jpg" alt="" />
+        <div className="sky-aurora" />
+      </div>
       {screen === "home" ? (
         <HomePage
           onReport={() => push("category")}
