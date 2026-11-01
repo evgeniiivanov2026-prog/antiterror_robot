@@ -51,6 +51,19 @@ describe("mini app", () => {
     expect(screen.getByRole("textbox", { name: "Описание" })).toHaveValue("Ситуация: шантаж")
   })
 
+  it("lists the youth hotline and the FSB trust line", async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await user.click(screen.getByRole("button", { name: "Полезные контакты" }))
+    expect(screen.getByRole("link", { name: /8-800-2000-122/ })).toHaveAttribute("href", "tel:88002000122")
+    expect(screen.getByRole("link", { name: /8-800-224-22-22/ })).toHaveAttribute("href", "tel:88002242222")
+    expect(screen.getByRole("link", { name: /Электронная приемная/ })).toHaveAttribute(
+      "href",
+      "https://www.fsb.ru/fsb/webreception.htm",
+    )
+    expect(screen.getByText(/отдельной линии только для подростков/i)).toBeInTheDocument()
+  })
+
   it("hides the admin panel until the session role is admin", async () => {
     render(<App />)
     expect(await screen.findByRole("heading", { name: "AntiTerror Robot" })).toBeInTheDocument()

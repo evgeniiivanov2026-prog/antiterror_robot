@@ -86,7 +86,11 @@ async def test_emergency_screen_data(api, auth_header) -> None:
     body = response.json()
     numbers = {item["number"] for item in body["phones"]}
     assert numbers == {"112", "102"}
+    support = {item["number"] for item in body["support_contacts"]}
+    assert "8-800-2000-122" in support
+    assert "8-800-224-22-22" in support
     assert "18" in body["minor_guidance"]
+    assert "мессенджер" in body["minor_guidance"]
     assert "не вызывает" in body["immediate_danger"] or "Не ждите" in body["immediate_danger"]
 
 
