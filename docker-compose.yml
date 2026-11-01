@@ -75,6 +75,27 @@ services:
       - frontend
     restart: unless-stopped
 
+  # Local door for a VM that has no domain. The tunnel publishes it over HTTPS.
+  gateway:
+    image: nginx:1.27-alpine
+    profiles: ["vm"]
+    ports:
+      - "127.0.0.1:8088:8088"
+    volumes:
+      - ./nginx/nginx.vm.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - backend
+      - frontend
+    restart: unless-stopped
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    profiles: ["vm"]
+    command: ["tunnel", "--no-autoupdate", "--url", "http://gateway:8088"]
+    depends_on:
+      - gateway
+    restart: unless-stopped
+
 volumes:
   pgdata:
   minio:

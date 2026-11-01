@@ -61,6 +61,17 @@ cd frontend && npm install && npm test && npm run build
 
 Или одной командой `make test`, если зависимости уже установлены.
 
+## Виртуальная машина без домена
+
+Одна машина Ubuntu выполняет всё: базу, хранилище, сайт, бота и временный адрес `https://`. Домен и сертификат не нужны. В `.env` поставьте `ALLOW_DEV_AUTH_BYPASS=false`, впишите `BOT_TOKEN` и `CONTACT_ENCRYPTION_KEY`. Для вебхука ещё `BOT_MODE=webhook` и `BOT_WEBHOOK_SECRET`. Для обычной работы оставьте `BOT_MODE=polling`.
+
+```bash
+sh scripts/vm-up.sh
+sh scripts/vm-up.sh --install-boot
+```
+
+Первая команда поднимает сервисы и печатает адрес страницы. Вторая включает тот же запуск после включения машины. Остановка: `sh scripts/vm-down.sh`. После перезапуска туннеля адрес меняется, поэтому команду `vm-up.sh` запускают снова.
+
 ## Деплой
 
 1. Замените пароль базы, ключи MinIO, токен бота и ключ шифрования. `APP_ENV=production`, `FORCE_HTTPS=true`, `TRUST_PROXY=true`, `ALLOW_DEV_AUTH_BYPASS=false`.
