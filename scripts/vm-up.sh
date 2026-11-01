@@ -36,7 +36,11 @@ if ! command -v docker >/dev/null 2>&1 || ! command -v python3 >/dev/null 2>&1; 
   exit 1
 fi
 if ! docker info >/dev/null 2>&1; then
-  echo "Этот пользователь не управляет Docker. Выполните sudo usermod -aG docker \"\$USER\" и войдите заново." >&2
+  if command -v systemctl >/dev/null 2>&1 && ! systemctl is-active --quiet docker; then
+    echo "Служба Docker не запущена. Выполните: systemctl enable --now docker" >&2
+  else
+    echo "Этот пользователь не управляет Docker. Выполните: sudo usermod -aG docker \"\$USER\" и войдите заново." >&2
+  fi
   exit 1
 fi
 if [ ! -f .env ]; then
