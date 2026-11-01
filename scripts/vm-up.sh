@@ -90,7 +90,8 @@ if mode == "webhook" and not env.get("BOT_WEBHOOK_SECRET"):
     sys.exit("Для вебхука впишите BOT_WEBHOOK_SECRET.")
 PY
 
-docker compose --profile vm up --build -d
+echo "Сборка образов. Номер шага может несколько минут стоять на месте: в это время ставятся программы."
+docker compose --progress plain --profile vm up --build -d
 
 url=""
 i=0
