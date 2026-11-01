@@ -1,0 +1,52 @@
+* { box-sizing: border-box; }
+
+html, body, #root { min-height: 100%; }
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at 8% -12%, rgba(15, 95, 90, 0.18), transparent 36%),
+    linear-gradient(180deg, rgba(255, 250, 243, 0.45), transparent 24%),
+    var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+:root[data-theme="dark"] body {
+  background:
+    radial-gradient(circle at 10% -10%, rgba(143, 208, 200, 0.16), transparent 34%),
+    var(--bg);
+}
+
+button, input, select, textarea { font: inherit; color: inherit; }
+
+button { cursor: pointer; }
+
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.skip {
+  position: absolute;
+  left: 12px;
+  top: -40px;
+  background: var(--bg-elevated);
+  color: var(--ink);
+  padding: 8px 12px;
+  z-index: 5;
+}
+
+.skip:focus { top: 12px; }
+
+.app {
+  width: min(440px, 100%);
+  margin: 0 auto;
+  padding: calc(18px + env(safe-area-inset-top)) 16px calc(28px + env(safe-area-inset-bottom));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { scroll-behavior: auto !important; transition: none !important; }
+}

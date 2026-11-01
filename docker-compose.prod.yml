@@ -1,0 +1,18 @@
+services:
+  api:
+    environment:
+      ENVIRONMENT: production
+      ENFORCE_HTTPS: "true"
+      BOT_MODE: webhook
+      PUBLIC_API_URL: ${PUBLIC_API_URL:?set PUBLIC_API_URL}
+      WEBHOOK_SECRET: ${WEBHOOK_SECRET:?set WEBHOOK_SECRET}
+      WEBAPP_URL: ${WEBAPP_URL:?set WEBAPP_URL}
+  bot:
+    profiles: ["disabled"]
+  web:
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/nginx/prod.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./deploy/certs:/etc/nginx/certs:ro

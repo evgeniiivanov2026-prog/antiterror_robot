@@ -1,0 +1,108 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-antiterror}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local-dev-only}
+      POSTGRES_DB: ${POSTGRES_DB:-antiterror}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:-local-minio-user}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-local-minio-secret}
+    volumes:
+      - minio:/data
+
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      - minio
+    environment:
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-local-minio-user}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-local-minio-secret}
+      S3_BUCKET: ${S3_BUCKET:-antiterror-evidence}
+    entrypoint: >
+      /bin/sh -c "
+      until mc alias set local http://minio:9000 $$S3_ACCESS_KEY $$S3_SECRET_KEY; do sleep 1; done;
+      mc mb -p local/$$S3_BUCKET || true;
+      exit 0;
+      "
+
+  api:
+    build: ./backend
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      ENFORCE_HTTPS: ${ENFORCE_HTTPS:-false}
+      ALLOW_DEV_AUTH: ${ALLOW_DEV_AUTH:-false}
+      BOT_TOKEN: ${BOT_TOKEN:-}
+      BOT_MODE: disabled
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-antiterror}:${POSTGRES_PASSWORD:-local-dev-only}@db:5432/${POSTGRES_DB:-antiterror}
+      REDIS_URL: redis://redis:6379/0
+      CONTACT_ENCRYPTION_KEY: ${CONTACT_ENCRYPTION_KEY:-}
+      LOG_HASH_SALT: ${LOG_HASH_SALT:-development-only-salt}
+      S3_ENDPOINT: http://minio:9000
+      S3_BUCKET: ${S3_BUCKET:-antiterror-evidence}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-local-minio-user}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-local-minio-secret}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      PDF_FONT_PATH: /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf
+      RETENTION_DAYS: ${RETENTION_DAYS:-90}
+      MODERATOR_IDS: ${MODERATOR_IDS:-}
+      ADMIN_IDS: ${ADMIN_IDS:-}
+      CLAMAV_HOST: ${CLAMAV_HOST:-}
+      CORS_ORIGINS: http://localhost:5173,http://localhost:8080
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health')"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  bot:
+    build: ./backend
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      BOT_TOKEN: ${BOT_TOKEN:-}
+      BOT_MODE: polling
+      WEBAPP_URL: ${WEBAPP_URL:-}
+      RETENTION_DAYS: ${RETENTION_DAYS:-90}
+      LOG_HASH_SALT: ${LOG_HASH_SALT:-development-only-salt}
+    command: python -m app.bot.main
+    restart: on-failure
+    depends_on:
+      - api
+
+  web:
+    build:
+      context: ./frontend
+      args:
+        VITE_DEV_USER_ID: ${VITE_DEV_USER_ID:-}
+    depends_on:
+      - api
+    ports:
+      - "8080:80"
+
+volumes:
+  pgdata:
+  minio:
