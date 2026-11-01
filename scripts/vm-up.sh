@@ -36,11 +36,17 @@ if ! command -v docker >/dev/null 2>&1 || ! command -v python3 >/dev/null 2>&1; 
   exit 1
 fi
 if ! docker info >/dev/null 2>&1; then
-  if command -v systemctl >/dev/null 2>&1 && ! systemctl is-active --quiet docker; then
-    echo "Служба Docker не запущена. Выполните: systemctl enable --now docker" >&2
-  else
-    echo "Этот пользователь не управляет Docker. Выполните: sudo usermod -aG docker \"\$USER\" и войдите заново." >&2
+  if command -v systemctl >/dev/null 2>&1 && [ "$(id -u)" -eq 0 ]; then
+    systemctl enable --now docker
   fi
+fi
+if ! docker info >/dev/null 2>&1; then
+  echo "Docker не запустился. Выполните от root: systemctl enable --now docker" >&2
+  systemctl status docker --no-pager >&2 || true
+  exit 1
+fi
+if ! docker compose version >/dev/null 2>&1; then
+  echo "Нет команды docker compose. Выполните: apt install -y docker-compose-v2" >&2
   exit 1
 fi
 if [ ! -f .env ]; then
