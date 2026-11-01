@@ -9,7 +9,8 @@ from cryptography.fernet import Fernet
 from pydantic import ValidationError
 
 from app.bot.factory import build_dispatcher
-from app.bot.texts import EMERGENCY, START
+from app.bot.keyboards import admin_webapp_url
+from app.bot.texts import EMERGENCY, START, admin_panel_text
 from app.core.config import Settings
 from app.core.copy import DISCLAIMER
 from app.core.telegram_auth import validate_init_data
@@ -127,7 +128,12 @@ def test_bot_registers_required_commands() -> None:
         for router in dispatcher.sub_routers
         for handler in router.message.handlers
     }
-    assert {"cmd_start", "cmd_report", "cmd_emergency", "cmd_evidence", "cmd_privacy"} <= names
+    assert {"cmd_start", "cmd_report", "cmd_emergency", "cmd_evidence", "cmd_privacy", "cmd_admin"} <= names
     assert "112" in EMERGENCY and "102" in EMERGENCY
     assert "не является правоохранительным" in START
     assert "не является правоохранительным" in DISCLAIMER
+    assert admin_webapp_url(settings) == "https://app.example?screen=admin"
+    assert admin_webapp_url(Settings(app_env="test", webapp_url="http://127.0.0.1:5173")) is None
+    denied = admin_panel_text(4242, False, False)
+    assert "4242" in denied
+    assert "ADMIN_TELEGRAM_IDS" in denied

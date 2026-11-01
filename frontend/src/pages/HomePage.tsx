@@ -5,11 +5,13 @@ export function HomePage({
   onEmergency,
   onEvidence,
   onContacts,
+  onAdmin,
 }: {
   onReport: () => void
   onEmergency: () => void
   onEvidence: () => void
   onContacts: () => void
+  onAdmin?: () => void
 }) {
   return (
     <main className="home">
@@ -41,6 +43,11 @@ export function HomePage({
         <button className="btn btn-quiet" type="button" onClick={onContacts}>
           Полезные контакты
         </button>
+        {onAdmin ? (
+          <button className="btn btn-quiet" type="button" onClick={onAdmin}>
+            Панель администратора
+          </button>
+        ) : null}
       </div>
       <p className="footer-note">{IMMEDIATE_DANGER}</p>
       <p className="footer-note">{DISCLAIMER}</p>

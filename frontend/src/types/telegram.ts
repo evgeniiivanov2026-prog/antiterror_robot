@@ -22,6 +22,7 @@ export interface TelegramWebApp {
   ready: () => void
   expand: () => void
   initData: string
+  initDataUnsafe?: { start_param?: string }
   colorScheme: "light" | "dark"
   themeParams: ThemeParams
   MainButton: TelegramButton

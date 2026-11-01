@@ -9,7 +9,7 @@ export function Screen({
   title: string
   lede?: string
   children: ReactNode
-  tone?: "default" | "alert"
+  tone?: "default" | "alert" | "staff"
 }) {
   const heading = useRef<HTMLHeadingElement>(null)
   useEffect(() => {
@@ -17,7 +17,7 @@ export function Screen({
   }, [title])
   return (
     <main className={tone === "alert" ? "screen screen-alert" : "screen"}>
-      <p className="kicker">{tone === "alert" ? "Прямо сейчас" : "Орбита"}</p>
+      <p className="kicker">{tone === "alert" ? "Прямо сейчас" : tone === "staff" ? "Служба" : "Орбита"}</p>
       <h1 ref={heading} tabIndex={-1}>
         {title}
       </h1>

@@ -11,3 +11,8 @@ class CategoryMeta(BaseModel):
 class CategoryList(BaseModel):
     categories: list[CategoryMeta]
     disclaimer: str
+
+
+class SessionProfile(BaseModel):
+    role: str
+    telegram_id: int

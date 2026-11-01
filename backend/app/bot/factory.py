@@ -8,12 +8,34 @@ from aiogram.types import CallbackQuery, ErrorEvent, Message
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from app.bot import texts
-from app.bot.keyboards import main_keyboard
+from app.bot.keyboards import admin_keyboard, main_keyboard
 from app.core.config import Settings
 from app.models.emergency import EmergencyEvent
 from app.services.users import upsert_user
 
 logger = logging.getLogger(__name__)
+
+
+async def configure_bot(bot, settings: Settings) -> None:
+    """Register commands and the menu button that opens the mini app."""
+    from aiogram.types import BotCommand, MenuButtonDefault, MenuButtonWebApp, WebAppInfo
+
+    await bot.set_my_commands(
+        [
+            BotCommand(command="start", description="Открыть AntiTerror Robot"),
+            BotCommand(command="report", description="Сообщить о происшествии"),
+            BotCommand(command="emergency", description="Срочная помощь: 112 и 102"),
+            BotCommand(command="evidence", description="Как сохранить доказательства"),
+            BotCommand(command="privacy", description="Конфиденциальность"),
+            BotCommand(command="admin", description="Панель администратора"),
+        ]
+    )
+    if settings.webapp_url.startswith("https://"):
+        await bot.set_chat_menu_button(
+            menu_button=MenuButtonWebApp(text="Сообщить", web_app=WebAppInfo(url=settings.webapp_url))
+        )
+    else:
+        await bot.set_chat_menu_button(menu_button=MenuButtonDefault())
 
 
 async def _record_emergency(sessionmaker: async_sessionmaker | None, telegram_id: int | None, settings: Settings) -> None:
@@ -57,6 +79,16 @@ def build_dispatcher(settings: Settings, sessionmaker: async_sessionmaker | None
     @router.message(Command("privacy"))
     async def cmd_privacy(message: Message) -> None:
         await message.answer(texts.PRIVACY)
+
+    @router.message(Command("admin"))
+    async def cmd_admin(message: Message) -> None:
+        telegram_id = message.from_user.id if message.from_user else 0
+        is_admin = telegram_id in settings.admin_ids
+        keyboard = admin_keyboard(settings) if is_admin else None
+        await message.answer(
+            texts.admin_panel_text(telegram_id, is_admin, keyboard is not None),
+            reply_markup=keyboard,
+        )
 
     @router.callback_query(F.data == "emergency")
     async def cb_emergency(query: CallbackQuery) -> None:

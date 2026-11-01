@@ -1,5 +1,19 @@
 import type { CategoryInfo, IncidentCard } from "../types/incident"
 
+export interface SessionProfile {
+  role: "user" | "moderator" | "admin"
+  telegram_id: number
+}
+
+export interface ModerationItem {
+  id: string
+  public_id: string
+  category: IncidentCard["category"]
+  threat_level: IncidentCard["threat_level"]
+  status: IncidentCard["status"]
+  created_at: string
+}
+
 export class ApiError extends Error {
   code: string
 
@@ -87,6 +101,26 @@ export const api = {
     const response = await fetch(`${root}/api/v1/reports/${reportId}`, {
       method: "DELETE",
       headers: authHeaders(false),
+    })
+    await parse(response)
+  },
+  async session(): Promise<SessionProfile> {
+    const response = await fetch(`${root}/api/v1/me`, { headers: authHeaders(false) })
+    return parse(response)
+  },
+  async moderationReports(): Promise<ModerationItem[]> {
+    const response = await fetch(`${root}/api/v1/moderation/reports`, { headers: authHeaders(false) })
+    return parse(response)
+  },
+  async moderationReport(reportId: string): Promise<IncidentCard> {
+    const response = await fetch(`${root}/api/v1/moderation/reports/${reportId}`, { headers: authHeaders(false) })
+    return parse(response)
+  },
+  async moderationClose(reportId: string, status: "under_review" | "closed", reason: string): Promise<void> {
+    const response = await fetch(`${root}/api/v1/moderation/reports/${reportId}/close`, {
+      method: "POST",
+      headers: authHeaders(true),
+      body: JSON.stringify({ status, reason }),
     })
     await parse(response)
   },
