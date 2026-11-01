@@ -1,6 +1,7 @@
 FROM node:22-bookworm-slim
 
 ENV NPM_CONFIG_UPDATE_NOTIFIER=false
+ENV CI=true
 
 # deb.debian.org (Fastly) times out from some servers, and an empty package
 # list then makes apt claim that ca-certificates and openssl do not exist.
@@ -25,30 +26,31 @@ RUN set -eu; \
     install_debian http://mirror.yandex.ru/debian http://mirror.yandex.ru/debian-security \
       || install_debian http://ftp.ru.debian.org/debian http://ftp.ru.debian.org/debian-security; \
   fi; \
-  npm install -g pnpm@9.15.9 --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-timeout=120000 \
-    || { \
-      npm install -g pnpm@9.15.9 --registry https://registry.npmmirror.com --fetch-retries=5 --fetch-timeout=120000; \
-      pnpm config set registry https://registry.npmmirror.com; \
-    }
+  echo "Ставлю pnpm с зеркала"; \
+  timeout 120 npm install -g pnpm@9.15.9 --registry https://registry.npmmirror.com --fetch-retries=2 --fetch-timeout=20000 \
+    || timeout 120 npm install -g pnpm@9.15.9 --registry https://repo.huaweicloud.com/repository/npm/ --fetch-retries=2 --fetch-timeout=20000 \
+    || timeout 90 npm install -g pnpm@9.15.9 --registry https://registry.npmjs.org --fetch-retries=1 --fetch-timeout=20000
 
 WORKDIR /app
 
 COPY package.json pnpm-lock.yaml ./
 COPY src/database/schema.prisma ./src/database/schema.prisma
-# registry.npmjs.org resets connections from some servers (ECONNRESET) and
-# retries each package for many minutes. Fail that attempt quickly, then use a mirror.
+# registry.npmjs.org stalls from this server: the connection neither finishes
+# nor resets, so a first attempt there looks frozen. Use a mirror immediately
+# and kill the attempt if it stays silent.
 RUN set -eu; \
-  if ! pnpm install --frozen-lockfile --fetch-retries 0 --fetch-timeout 25000 --network-concurrency 16; then \
-    echo "registry.npmjs.org оборвал соединение, скачиваю библиотеки с зеркала"; \
+  install_deps() { \
+    registry="$1"; \
     rm -rf node_modules; \
-    PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma \
-      pnpm install --frozen-lockfile \
-        --registry https://registry.npmmirror.com \
-        --fetch-retries 5 \
-        --fetch-timeout 120000 \
-        --network-concurrency 16; \
-    printf '%s\n' https://registry.npmmirror.com/-/binary/prisma > /tmp/prisma-engines-mirror; \
-  fi
+    echo "Библиотеки: $registry"; \
+    timeout 300 env PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma \
+      pnpm install --frozen-lockfile --registry "$registry" \
+        --fetch-retries 3 --fetch-timeout 30000 --network-concurrency 16; \
+  }; \
+  install_deps https://registry.npmmirror.com \
+    || install_deps https://repo.huaweicloud.com/repository/npm/ \
+    || install_deps https://registry.npmjs.org; \
+  printf '%s\n' https://registry.npmmirror.com/-/binary/prisma > /tmp/prisma-engines-mirror
 
 COPY . .
 RUN set -eu; \

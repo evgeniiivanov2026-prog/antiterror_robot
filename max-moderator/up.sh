@@ -28,7 +28,11 @@ while [ "$attempt" -le 4 ]; do
   attempt=$((attempt + 1))
 done
 
-echo "Собираю бота старым сборщиком Docker..."
-docker compose build
+echo "Собираю бота. В журнале должны появиться строки «Ставлю pnpm» и «Библиотеки»."
+progress=
+if docker compose build --help 2>&1 | grep -q -- '--progress'; then
+  progress=--progress=plain
+fi
+docker compose build $progress
 docker compose up -d
 docker compose logs --tail=40 bot
