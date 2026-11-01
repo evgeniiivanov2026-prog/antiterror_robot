@@ -52,7 +52,7 @@ docker compose exec backend python -m app.workers.retention
 
 ## Проверка
 
-Нужен Python 3.12 и шрифт DejaVu (пакет `fonts-dejavu-core`): он нужен для русского PDF.
+Нужен Python 3.12. Шрифт для русского PDF лежит в `backend/app/fonts`.
 
 ```bash
 cd backend && python -m pip install -r requirements.txt && python -m pytest

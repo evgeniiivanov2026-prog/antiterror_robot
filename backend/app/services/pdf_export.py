@@ -10,11 +10,14 @@ from app.core.errors import AppError
 from app.models.incident import IncidentReport
 from app.services.safety import urgency_note
 
+_BUNDLED_FONTS = Path(__file__).resolve().parent.parent / "fonts"
 _FONT_CANDIDATES = (
+    _BUNDLED_FONTS / "DejaVuSans.ttf",
     Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
     Path("/usr/share/fonts/dejavu/DejaVuSans.ttf"),
 )
 _BOLD_CANDIDATES = (
+    _BUNDLED_FONTS / "DejaVuSans-Bold.ttf",
     Path("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"),
     Path("/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf"),
 )
