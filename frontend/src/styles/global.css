@@ -1,0 +1,212 @@
+:root {
+  color-scheme: light;
+  --bg: var(--tg-bg, #f6f3ec);
+  --text: var(--tg-text, #17211f);
+  --hint: var(--tg-hint, #3e4c48);
+  --link: var(--tg-link, #0b5c55);
+  --button: var(--tg-button, #0e6b63);
+  --button-text: var(--tg-button-text, #f7fffd);
+  --surface: var(--tg-surface, #fffdf8);
+  --line: color-mix(in srgb, var(--text) 14%, transparent);
+  --signal: #8d2f2a;
+  --signal-text: #fff8f6;
+  --signal-soft: #f8e7e3;
+  --ok: #1d6b3a;
+  --shadow: 0 16px 40px color-mix(in srgb, var(--text) 8%, transparent);
+  --radius: 18px;
+  font-family: "Segoe UI", "Avenir Next", "Nunito Sans", sans-serif;
+  font-size: 17px;
+  line-height: 1.45;
+  background: var(--bg);
+  color: var(--text);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-scheme="light"]) {
+    color-scheme: dark;
+    --bg: var(--tg-bg, #101816);
+    --text: var(--tg-text, #e8f2ee);
+    --hint: var(--tg-hint, #b7c7c1);
+    --link: var(--tg-link, #8fd9cf);
+    --button: var(--tg-button, #1f8f84);
+    --button-text: var(--tg-button-text, #f4fffd);
+    --surface: var(--tg-surface, #1a2622);
+    --signal: #e07a72;
+    --signal-text: #2a1210;
+    --signal-soft: #3a2220;
+    --ok: #8dcea4;
+    --shadow: none;
+  }
+}
+
+:root[data-scheme="dark"] {
+  color-scheme: dark;
+  --bg: var(--tg-bg, #101816);
+  --text: var(--tg-text, #e8f2ee);
+  --hint: var(--tg-hint, #b7c7c1);
+  --link: var(--tg-link, #8fd9cf);
+  --button: var(--tg-button, #1f8f84);
+  --button-text: var(--tg-button-text, #f4fffd);
+  --surface: var(--tg-surface, #1a2622);
+  --signal: #e07a72;
+  --signal-text: #2a1210;
+  --signal-soft: #3a2220;
+  --ok: #8dcea4;
+  --shadow: none;
+}
+
+* { box-sizing: border-box; }
+html, body, #root { min-height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+button, input, textarea, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+a { color: var(--link); }
+:focus-visible {
+  outline: 3px solid var(--link);
+  outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  * { scroll-behavior: auto !important; transition: none !important; }
+}
+
+.app {
+  width: min(440px, 100%);
+  margin: 0 auto;
+  padding: calc(20px + env(safe-area-inset-top)) 20px calc(28px + env(safe-area-inset-bottom));
+}
+
+.screen h1, .home h1 {
+  margin: 0;
+  font-family: Palatino, "Iowan Old Style", "Times New Roman", serif;
+  font-size: 2rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+.screen h1:focus { outline: none; }
+.lede, .slogan { color: var(--hint); margin: 10px 0 0; }
+.slogan { font-size: 1.05rem; color: var(--text); }
+
+.mark {
+  width: 48px;
+  height: 48px;
+  color: var(--button);
+  margin-bottom: 18px;
+}
+.home-actions, .stack, .choice-list { display: grid; gap: 12px; margin-top: 22px; }
+
+.btn, .call, .choice {
+  display: flex;
+  width: 100%;
+  text-align: left;
+  text-decoration: none;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  min-height: 54px;
+  padding: 14px 16px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.btn { justify-content: center; font-weight: 650; }
+.btn-primary, .call-primary {
+  background: var(--button);
+  color: var(--button-text);
+}
+.btn-quiet {
+  background: transparent;
+  color: var(--text);
+  border-color: var(--line);
+}
+.btn-signal, .call-signal {
+  background: var(--signal);
+  color: var(--signal-text);
+  min-height: 76px;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+.call { flex-direction: column; align-items: flex-start; justify-content: center; }
+.call small { font-weight: 550; }
+.btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.choice {
+  background: var(--surface);
+  border-color: var(--line);
+  box-shadow: var(--shadow);
+  flex-direction: column;
+  align-items: flex-start;
+}
+.choice strong { font-size: 1.05rem; }
+.choice span { color: var(--hint); font-size: 0.95rem; }
+
+.banner, .note, .error, .success {
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-top: 16px;
+}
+.banner, .note { background: var(--signal-soft); color: var(--text); }
+.note { background: var(--surface); border: 1px solid var(--line); }
+.error { background: var(--signal-soft); }
+.success { background: color-mix(in srgb, var(--ok) 16%, var(--surface)); }
+.banner a, .note a { font-weight: 650; }
+
+.progress {
+  height: 8px;
+  background: color-mix(in srgb, var(--text) 10%, transparent);
+  border-radius: 99px;
+  margin: 18px 0 8px;
+  overflow: hidden;
+}
+.progress > span {
+  display: block;
+  height: 100%;
+  background: var(--button);
+}
+.progress-1 > span { width: 16.6%; }
+.progress-2 > span { width: 33.3%; }
+.progress-3 > span { width: 50%; }
+.progress-4 > span { width: 66.6%; }
+.progress-5 > span { width: 83.3%; }
+.progress-6 > span { width: 100%; }
+.step-label { margin: 0; color: var(--hint); font-size: 0.92rem; }
+
+.field { display: grid; gap: 6px; margin-top: 16px; }
+.field span, .field label, .check { font-weight: 600; }
+.note h2 { margin: 0 0 8px; font-size: 1.05rem; }
+.hint { color: var(--hint); font-size: 0.92rem; font-weight: 400; }
+input, textarea, select {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 14px;
+  padding: 12px 14px;
+  min-height: 52px;
+}
+textarea { min-height: 140px; resize: vertical; }
+.check {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-top: 14px;
+  font-weight: 500;
+}
+.check input { width: 22px; height: 22px; min-height: 22px; margin-top: 2px; }
+
+.actions { display: grid; gap: 10px; margin-top: 22px; }
+.public-id {
+  font-family: Palatino, "Iowan Old Style", serif;
+  font-size: 2.2rem;
+  letter-spacing: 0.04em;
+  margin: 8px 0;
+}
+.facts { display: grid; gap: 8px; margin: 16px 0; padding: 0; }
+.facts div { display: grid; gap: 2px; }
+.facts dt { color: var(--hint); font-size: 0.88rem; }
+.facts dd { margin: 0; }
+.steps { margin: 12px 0 0; padding-left: 1.2rem; display: grid; gap: 10px; }
+.file-list { margin: 8px 0 0; padding-left: 1.1rem; }
+.counter { color: var(--hint); font-size: 0.85rem; text-align: right; }
+.footer-note { margin-top: 28px; color: var(--hint); font-size: 0.92rem; }

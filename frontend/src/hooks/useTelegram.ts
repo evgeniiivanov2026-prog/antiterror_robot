@@ -1,0 +1,98 @@
+import { useEffect, useRef } from "react"
+import type { ThemeParams } from "../types/telegram"
+
+function applyTheme(params: ThemeParams | undefined, scheme: "light" | "dark") {
+  const root = document.documentElement
+  root.dataset.scheme = scheme
+  const map: Record<keyof ThemeParams, string> = {
+    bg_color: "--tg-bg",
+    text_color: "--tg-text",
+    hint_color: "--tg-hint",
+    link_color: "--tg-link",
+    button_color: "--tg-button",
+    button_text_color: "--tg-button-text",
+    secondary_bg_color: "--tg-surface",
+  }
+  ;(Object.keys(map) as (keyof ThemeParams)[]).forEach((key) => {
+    const value = params?.[key]
+    if (value) root.style.setProperty(map[key], value)
+    else root.style.removeProperty(map[key])
+  })
+}
+
+export function useTelegram() {
+  useEffect(() => {
+    const tg = window.Telegram?.WebApp
+    tg?.ready()
+    tg?.expand()
+    const media = window.matchMedia?.("(prefers-color-scheme: dark)")
+    const apply = () => {
+      const current = window.Telegram?.WebApp
+      const inTelegram = Boolean(current?.initData)
+      const scheme = inTelegram
+        ? current?.colorScheme === "dark"
+          ? "dark"
+          : "light"
+        : media?.matches
+          ? "dark"
+          : "light"
+      applyTheme(inTelegram ? current?.themeParams : undefined, scheme)
+    }
+    apply()
+    tg?.onEvent("themeChanged", apply)
+    media?.addEventListener("change", apply)
+    return () => {
+      tg?.offEvent("themeChanged", apply)
+      media?.removeEventListener("change", apply)
+    }
+  }, [])
+
+  return { inTelegram: Boolean(window.Telegram?.WebApp?.initData) }
+}
+
+export function haptic(kind: "select" | "success" | "error" | "warning") {
+  const feedback = window.Telegram?.WebApp?.HapticFeedback
+  if (!feedback) return
+  if (kind === "select") feedback.selectionChanged()
+  else feedback.notificationOccurred(kind)
+}
+
+export function useBackButton(visible: boolean, onBack: () => void) {
+  const onBackRef = useRef(onBack)
+  onBackRef.current = onBack
+  useEffect(() => {
+    const button = window.Telegram?.WebApp?.BackButton
+    if (!button) return
+    const handler = () => onBackRef.current()
+    if (visible) {
+      button.show()
+      button.onClick(handler)
+    } else {
+      button.hide()
+    }
+    return () => button.offClick(handler)
+  }, [visible])
+}
+
+export function useMainButton(action: { visible: boolean; text: string; disabled?: boolean; onClick: () => void }) {
+  const onClickRef = useRef(action.onClick)
+  onClickRef.current = action.onClick
+  useEffect(() => {
+    const button = window.Telegram?.WebApp?.MainButton
+    if (!button?.setText || !button.enable || !button.disable) return
+    const handler = () => onClickRef.current()
+    if (!action.visible) {
+      button.hide()
+      return
+    }
+    button.setText(action.text)
+    if (action.disabled) button.disable()
+    else button.enable()
+    button.onClick(handler)
+    button.show()
+    return () => {
+      button.offClick(handler)
+      button.hide()
+    }
+  }, [action.visible, action.text, action.disabled])
+}
