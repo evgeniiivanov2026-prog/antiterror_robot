@@ -1,0 +1,43 @@
+{
+  "name": "max-moderation-bot",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.33.4",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "tsx src/main.ts",
+    "build": "prisma generate --schema src/database/schema.prisma && tsc -p tsconfig.json",
+    "start": "node dist/main.js",
+    "test": "vitest run",
+    "typecheck": "prisma generate --schema src/database/schema.prisma && tsc -p tsconfig.json --noEmit && tsc -p tsconfig.test.json --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "prisma:generate": "prisma generate --schema src/database/schema.prisma",
+    "prisma:migrate": "prisma migrate deploy --schema src/database/schema.prisma"
+  },
+  "dependencies": {
+    "@maxhub/max-bot-api": "1.0.2",
+    "@prisma/client": "6.18.0",
+    "ioredis": "5.8.2",
+    "pino": "9.14.0",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.1",
+    "@types/node": "22.19.0",
+    "eslint": "9.39.1",
+    "eslint-config-prettier": "10.1.8",
+    "prettier": "3.6.2",
+    "prisma": "6.18.0",
+    "tsx": "4.20.6",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.46.2",
+    "vitest": "3.2.4"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["@prisma/client", "@prisma/engines", "esbuild", "prisma"]
+  }
+}

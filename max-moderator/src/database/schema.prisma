@@ -1,0 +1,195 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RuleType {
+  WORD
+  REGEX
+  LINK_DOMAIN
+  SPAM_PATTERN
+  CAPS
+  FLOOD
+  MENTION_SPAM
+  MEDIA
+  FORWARD
+  CUSTOM_AI
+}
+
+enum ModerationAction {
+  DELETE
+  WARN
+  MUTE
+  KICK
+  NOTIFY_ADMINS
+  REVIEW
+}
+
+enum Severity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum LinkMode {
+  ALLOW
+  DENY
+  REVIEW
+}
+
+enum LinkList {
+  ALLOW
+  DENY
+}
+
+enum AdminRoleName {
+  ADMIN
+  OWNER
+}
+
+model ChatSettings {
+  id               Int              @id @default(autoincrement())
+  chatId           String           @unique @map("chat_id")
+  linkMode         LinkMode         @default(REVIEW) @map("link_mode")
+  defaultAction    ModerationAction @default(DELETE) @map("default_action")
+  language         String           @default("ru")
+  enabled          Boolean          @default(true)
+  wholeWord        Boolean          @default(true) @map("whole_word")
+  capsEnabled      Boolean          @default(true) @map("caps_enabled")
+  capsRatio        Float            @default(0.7) @map("caps_ratio")
+  capsMinLength    Int              @default(20) @map("caps_min_length")
+  floodEnabled     Boolean          @default(true) @map("flood_enabled")
+  floodMaxMessages Int              @default(5) @map("flood_max_messages")
+  floodWindowSec   Int              @default(10) @map("flood_window_sec")
+  mentionEnabled   Boolean          @default(true) @map("mention_enabled")
+  mentionMax       Int              @default(5) @map("mention_max")
+  repeatEnabled    Boolean          @default(true) @map("repeat_enabled")
+  repeatMax        Int              @default(3) @map("repeat_max")
+  repeatWindowSec  Int              @default(120) @map("repeat_window_sec")
+  mediaMode        String           @default("off") @map("media_mode")
+  forwardMode      String           @default("off") @map("forward_mode")
+  hardAction       ModerationAction @default(NOTIFY_ADMINS) @map("hard_action")
+  muteMinutes      Int              @default(15) @map("mute_minutes")
+  allowPurge       Boolean          @default(false) @map("allow_purge")
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+
+  @@map("chat_settings")
+}
+
+model WordFilter {
+  id        Int              @id @default(autoincrement())
+  chatId    String           @map("chat_id")
+  type      RuleType
+  pattern   String
+  action    ModerationAction
+  severity  Severity
+  enabled   Boolean          @default(true)
+  createdBy String           @map("created_by")
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @updatedAt @map("updated_at")
+
+  @@index([chatId, enabled])
+  @@map("word_filters")
+}
+
+model LinkRule {
+  id        Int              @id @default(autoincrement())
+  chatId    String           @map("chat_id")
+  domain    String
+  list      LinkList
+  action    ModerationAction @default(DELETE)
+  note      String           @default("")
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @updatedAt @map("updated_at")
+
+  @@unique([chatId, domain])
+  @@index([chatId])
+  @@map("link_rules")
+}
+
+model UserWhitelist {
+  id        Int      @id @default(autoincrement())
+  chatId    String   @map("chat_id")
+  userId    String   @map("user_id")
+  reason    String   @default("")
+  createdBy String   @map("created_by")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([chatId, userId])
+  @@map("user_whitelist")
+}
+
+model Violation {
+  id            Int              @id @default(autoincrement())
+  chatId        String           @map("chat_id")
+  userId        String           @map("user_id")
+  messageId     String           @map("message_id")
+  contentHash   String           @map("content_hash")
+  ruleId        Int?             @map("rule_id")
+  violationType RuleType         @map("violation_type")
+  severity      Severity
+  action        ModerationAction
+  reason        String
+  createdAt     DateTime         @default(now()) @map("created_at")
+
+  @@unique([chatId, messageId, contentHash])
+  @@index([chatId, userId, createdAt])
+  @@map("violations")
+}
+
+model AuditLog {
+  id           Int      @id @default(autoincrement())
+  chatId       String   @map("chat_id")
+  actorId      String   @map("actor_id")
+  targetUserId String?  @map("target_user_id")
+  action       String
+  reason       String
+  metadata     Json     @default("{}")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([chatId, createdAt])
+  @@map("audit_logs")
+}
+
+model AdminRole {
+  id        Int           @id @default(autoincrement())
+  chatId    String        @map("chat_id")
+  userId    String        @map("user_id")
+  role      AdminRoleName
+  createdBy String        @map("created_by")
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  @@unique([chatId, userId])
+  @@map("admin_roles")
+}
+
+model ProcessedEvent {
+  id          Int      @id @default(autoincrement())
+  chatId      String   @map("chat_id")
+  messageId   String   @map("message_id")
+  contentHash String   @map("content_hash")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@unique([chatId, messageId, contentHash])
+  @@map("processed_events")
+}
+
+/// Local mute. MAX Bot API does not document a temporary mute method.
+model UserRestriction {
+  id        Int      @id @default(autoincrement())
+  chatId    String   @map("chat_id")
+  userId    String   @map("user_id")
+  kind      String
+  until     DateTime
+  reason    String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([chatId, userId])
+  @@map("user_restrictions")
+}
