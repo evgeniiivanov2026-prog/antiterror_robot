@@ -1,5 +1,7 @@
 FROM node:22-bookworm-slim
 
+ENV NPM_CONFIG_UPDATE_NOTIFIER=false
+
 # deb.debian.org (Fastly) times out from some servers, and an empty package
 # list then makes apt claim that ca-certificates and openssl do not exist.
 # The slim image already ships both libraries Prisma needs. Download Debian
@@ -33,10 +35,28 @@ WORKDIR /app
 
 COPY package.json pnpm-lock.yaml ./
 COPY src/database/schema.prisma ./src/database/schema.prisma
-RUN pnpm install --frozen-lockfile
+# registry.npmjs.org resets connections from some servers (ECONNRESET) and
+# retries each package for many minutes. Fail that attempt quickly, then use a mirror.
+RUN set -eu; \
+  if ! pnpm install --frozen-lockfile --fetch-retries 0 --fetch-timeout 25000 --network-concurrency 16; then \
+    echo "registry.npmjs.org оборвал соединение, скачиваю библиотеки с зеркала"; \
+    rm -rf node_modules; \
+    PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma \
+      pnpm install --frozen-lockfile \
+        --registry https://registry.npmmirror.com \
+        --fetch-retries 5 \
+        --fetch-timeout 120000 \
+        --network-concurrency 16; \
+    printf '%s\n' https://registry.npmmirror.com/-/binary/prisma > /tmp/prisma-engines-mirror; \
+  fi
 
 COPY . .
-RUN pnpm exec prisma generate && pnpm build \
+RUN set -eu; \
+  if [ -f /tmp/prisma-engines-mirror ]; then \
+    PRISMA_ENGINES_MIRROR="$(cat /tmp/prisma-engines-mirror)"; \
+    export PRISMA_ENGINES_MIRROR; \
+  fi; \
+  pnpm exec prisma generate && pnpm build \
   && chmod +x docker-entrypoint.sh
 
 ENV NODE_ENV=production

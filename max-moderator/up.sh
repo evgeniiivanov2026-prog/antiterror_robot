@@ -29,6 +29,6 @@ while [ "$attempt" -le 4 ]; do
 done
 
 echo "Собираю бота старым сборщиком Docker..."
-docker compose build --no-cache
+docker compose build
 docker compose up -d
 docker compose logs --tail=40 bot
