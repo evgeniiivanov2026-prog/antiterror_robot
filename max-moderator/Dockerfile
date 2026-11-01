@@ -1,12 +1,11 @@
 FROM node:22-bookworm-slim
 
-ENV NPM_CONFIG_UPDATE_NOTIFIER=false
-ENV CI=true
+ENV DEBIAN_FRONTEND=noninteractive
+ENV NODE_ENV=production
 
-# deb.debian.org (Fastly) times out from some servers, and an empty package
-# list then makes apt claim that ca-certificates and openssl do not exist.
-# The slim image already ships both libraries Prisma needs. Download Debian
-# packages only when they are missing, and then from a mirror that answers.
+# The slim image on some hosts has no OpenSSL. deb.debian.org times out there;
+# mirror.yandex.ru answers. npm registries do not, so Node libraries are
+# unpacked from vendor/runtime.tar.gz instead of being downloaded.
 RUN set -eu; \
   has_ssl=0; \
   for lib in /usr/lib/*/libssl.so.3 /lib/*/libssl.so.3; do \
@@ -25,41 +24,14 @@ RUN set -eu; \
     }; \
     install_debian http://mirror.yandex.ru/debian http://mirror.yandex.ru/debian-security \
       || install_debian http://ftp.ru.debian.org/debian http://ftp.ru.debian.org/debian-security; \
-  fi; \
-  echo "Ставлю pnpm с зеркала"; \
-  timeout 120 npm install -g pnpm@9.15.9 --registry https://registry.npmmirror.com --fetch-retries=2 --fetch-timeout=20000 \
-    || timeout 120 npm install -g pnpm@9.15.9 --registry https://repo.huaweicloud.com/repository/npm/ --fetch-retries=2 --fetch-timeout=20000 \
-    || timeout 90 npm install -g pnpm@9.15.9 --registry https://registry.npmjs.org --fetch-retries=1 --fetch-timeout=20000
+  fi
 
 WORKDIR /app
 
-COPY package.json pnpm-lock.yaml ./
-COPY src/database/schema.prisma ./src/database/schema.prisma
-# registry.npmjs.org stalls from this server: the connection neither finishes
-# nor resets, so a first attempt there looks frozen. Use a mirror immediately
-# and kill the attempt if it stays silent.
-RUN set -eu; \
-  install_deps() { \
-    registry="$1"; \
-    rm -rf node_modules; \
-    echo "Библиотеки: $registry"; \
-    timeout 300 env PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma \
-      pnpm install --frozen-lockfile --registry "$registry" \
-        --fetch-retries 3 --fetch-timeout 30000 --network-concurrency 16; \
-  }; \
-  install_deps https://registry.npmmirror.com \
-    || install_deps https://repo.huaweicloud.com/repository/npm/ \
-    || install_deps https://registry.npmjs.org; \
-  printf '%s\n' https://registry.npmmirror.com/-/binary/prisma > /tmp/prisma-engines-mirror
+COPY vendor/runtime.tar.gz /tmp/runtime.tar.gz
+RUN tar -xzf /tmp/runtime.tar.gz -C /app && rm /tmp/runtime.tar.gz
 
-COPY . .
-RUN set -eu; \
-  if [ -f /tmp/prisma-engines-mirror ]; then \
-    PRISMA_ENGINES_MIRROR="$(cat /tmp/prisma-engines-mirror)"; \
-    export PRISMA_ENGINES_MIRROR; \
-  fi; \
-  pnpm exec prisma generate && pnpm build \
-  && chmod +x docker-entrypoint.sh
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh
 
-ENV NODE_ENV=production
 ENTRYPOINT ["./docker-entrypoint.sh"]

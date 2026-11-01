@@ -28,11 +28,7 @@ while [ "$attempt" -le 4 ]; do
   attempt=$((attempt + 1))
 done
 
-echo "Собираю бота. В журнале должны появиться строки «Ставлю pnpm» и «Библиотеки»."
-progress=
-if docker compose build --help 2>&1 | grep -q -- '--progress'; then
-  progress=--progress=plain
-fi
-docker compose build $progress
+echo "Собираю образ. Библиотеки уже в проекте, сайт npm не используется."
+docker build -t max-moderator-bot .
 docker compose up -d
 docker compose logs --tail=40 bot
