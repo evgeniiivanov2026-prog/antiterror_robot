@@ -48,6 +48,18 @@ else
   done
 fi
 
+if [ ! -s certs/russian-trusted-ca.pem ]; then
+  echo "Нет файла certs/russian-trusted-ca.pem. Выполните git pull в корне репозитория."
+  exit 1
+fi
+
+if docker image inspect max-moderator-bot >/dev/null 2>&1; then
+  echo "Образ уже собран. Подключаю сертификат Минцифры и перезапускаю бота без новой сборки."
+  docker compose up -d --force-recreate bot
+  docker compose logs --tail=50 bot
+  exit 0
+fi
+
 echo "Собираю образ. Библиотеки уже в проекте, сайт npm не используется."
 docker build -t max-moderator-bot .
 docker compose up -d

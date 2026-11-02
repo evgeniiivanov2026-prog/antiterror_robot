@@ -31,8 +31,12 @@ services:
       - .env
     environment:
       NODE_ENV: production
+      NODE_EXTRA_CA_CERTS: /certs/russian-trusted-ca.pem
+      CHECKPOINT_DISABLE: "1"
       DATABASE_URL: postgresql://max:max@postgres:5432/max_moderator?schema=public
       REDIS_URL: redis://redis:6379
+    volumes:
+      - ./certs/russian-trusted-ca.pem:/certs/russian-trusted-ca.pem:ro
     depends_on:
       postgres:
         condition: service_healthy
