@@ -1,0 +1,49 @@
+{
+  "name": "max-moderator",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Production-ready chat moderation bot for the MAX messenger",
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@9.15.9",
+  "prisma": {
+    "schema": "src/database/schema.prisma"
+  },
+  "scripts": {
+    "dev": "tsx src/bot/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/bot/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate deploy",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@maxhub/max-bot-api": "1.0.2",
+    "@prisma/client": "6.19.0",
+    "dotenv": "16.6.1",
+    "ioredis": "5.8.2",
+    "pino": "9.14.0",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.1",
+    "@eslint/js": "9.39.1",
+    "eslint": "9.39.1",
+    "eslint-config-prettier": "10.1.8",
+    "globals": "16.5.0",
+    "pino-pretty": "13.1.2",
+    "prettier": "3.6.2",
+    "prisma": "6.19.0",
+    "tsx": "4.20.6",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.46.2",
+    "vitest": "3.2.4"
+  }
+}
