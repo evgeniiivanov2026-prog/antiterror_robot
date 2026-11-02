@@ -59,9 +59,12 @@ export class RedisKeyValue implements KeyValue {
 
 export function createRedis(url: string, logger: Logger): Redis {
   const redis = new Redis(url, {
-    maxRetriesPerRequest: 2,
-    enableReadyCheck: true,
-    lazyConnect: false,
+    maxRetriesPerRequest: 1,
+    enableReadyCheck: false,
+    lazyConnect: true,
+    retryStrategy(times: number) {
+      return Math.min(times * 1000, 15000);
+    },
   });
   redis.on('error', (error: Error) => {
     logger.error({ err: error }, 'redis connection error');

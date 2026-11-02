@@ -3,6 +3,8 @@ FROM node:22-bookworm-slim
 ENV DEBIAN_FRONTEND=noninteractive
 ENV NODE_ENV=production
 ENV NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/russian-trusted-ca.crt
+ENV CHECKPOINT_DISABLE=1
+ENV PRISMA_HIDE_UPDATE_MESSAGE=1
 
 # The slim image on some hosts has no OpenSSL. deb.debian.org times out there;
 # mirror.yandex.ru answers. npm registries do not, so Node libraries are
