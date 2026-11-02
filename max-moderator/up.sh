@@ -3,6 +3,22 @@ set -eu
 
 cd "$(dirname "$0")"
 
+# An SSH disconnect kills a foreground build. Run detached and keep a log.
+if [ -z "${UP_DETACHED:-}" ]; then
+  if [ -f up.pid ] && kill -0 "$(cat up.pid)" 2>/dev/null; then
+    echo "Сборка уже идёт. Журнал: tail -f up.log"
+    exit 0
+  fi
+  export UP_DETACHED=1
+  nohup "$0" >up.log 2>&1 &
+  echo $! >up.pid
+  echo "Сборка идёт в фоне и не оборвётся вместе со связью SSH."
+  echo "Журнал: tail -f up.log"
+  tail -f --pid "$(cat up.pid)" up.log || true
+  rm -f up.pid
+  exit 0
+fi
+
 if [ ! -f .env ]; then
   cp .env.example .env
   echo "Создан файл .env. Впишите токен в MAX_BOT_TOKEN и запустите скрипт снова."
